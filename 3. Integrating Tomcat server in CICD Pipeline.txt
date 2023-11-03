@@ -1,0 +1,123 @@
+#--------------------------------------------------------------
+# 3. Integrating Tomcat server in CICD Pipeline
+#--------------------------------------------------------------
+
+1. Introduction
+
+Deploy Artifacts on a tomcat server 
+
+2.Setup a Tomcat Server
+ * Setup a Linux EC2 instance
+ * Install java 
+ * Configure Tomcat 
+ * Start tomcat server 
+ * Access Web UI on port 8080
+
+ * Setup a Linux EC2 instance
+	https://github.com/azahardevops/Simple-DevOps-Project/blob/master/Tomcat/tomcat_installation.MD
+	* google ( tomcat download) 
+		tar.gz
+	* Create a new EC2 instance
+ 		* name (TomcatServer) , tags(tomcat_server), SG (22,8080)
+		* mobaxterm > public IP > 
+
+ * Install java 
+		* sudo su - 
+		# amazon-linux-extras epel java-openjdk11
+		# java --version 
+		# whereis java 
+		
+ * install tomcat 
+	* google ( tomcat download )
+	* download tar.gz 
+	# cd /opt
+	# wget URL
+	# tar -xvzf tar.gz
+	# mv apachexxxx tomcat
+	# cd bin/ 
+	# ./startup.sh 
+		browser ( public IP :8080)
+	* manager ( only from the browser from the same machine ) 
+		We need to update context.xml 
+
+	# cd tomcat/
+	# find / -name context.xml 
+	* webaaps/host-manager/META-INF/context.xml 
+	    vi  add + comment 	<!-- --> 
+	* webaaps/manager/META-INF/context.xml 
+	    vi  add + comment 	<!-- --> 
+	* restart the tomcat service
+	# cd bin/ 
+	# ./shutdown.sh
+	# ./startup.sh 
+		browser ( public IP :8080)
+	* manager  - asking for credentials 
+ * Configure Tomcat 
+	# cd tomcat/conf 
+	# vi tomcat-users.xml 
+		shift + G ( end of file) 
+
+<role rolename="manager-gui"/>
+ <role rolename="manager-script"/>
+ <role rolename="manager-jmx"/>
+ <role rolename="manager-status"/>
+ <user username="admin" password="admin" roles="manager-gui, manager-script, manager-jmx, manager-status"/>
+ <user username="deployer" password="deployer" roles="manager-script"/>
+ <user username="tomcat" password="s3cret" roles="manager-gui"/>
+	--save and exit (:wq!) 
+
+	
+ * Start tomcat server 
+* create link files for tomcat startup.sh and shutdown.sh
+	ln -s /opt/apache-tomcat/bin/startup.sh /usr/local/bin/tomcatup
+	ln -s /opt/apache-tomcat/bin/shutdown.sh /usr/local/bin/tomcatdown
+	# echo $PATH 
+	tomcatup
+ * Access Web UI on port 8080
+
+3. Integrating Tomcat with Jenkins
+-------------------------------------
+ * install plugin  ( deploy to container ) 
+ * Configure tomcat server with credentials
+
+
+ * install plugin  ( deploy to container ) 
+	Jenkins Server > Jenkins UI > Admin > Configure > Password ( ) 
+	Apply and Save  , logout , login , admin , new password 
+
+	Jenkins Web UI, Manage jenkins, Manage plugins , Available ( Deploy to Container) 
+	   - .war file to container 
+	   - select , install 
+
+ * Configure tomcat server with credentials
+	
+	Manage jenkins, Manage Credentials, Jenkins , Global Credentials, Add Credentials 
+	 ( username with password ) > un (deployer) pass( deployer), Description ( save)
+
+    Jenkins Dashboard  >  New Item > name (BuildAndDeployJOb) > Maven Project > OK 
+	General () 
+	SCM - git, (URL -hello world ) no credentials for public repo
+		- pull the code from master branch 
+	Build ( goals - clean install ) 
+
+	Post Build actions :
+		* Deploy .ear/war to container 
+			* webapp/target/webapp.war  ( artifacts are stored in target directory)
+		 	or 
+			**/*.war (ANT style) 
+		* Container ( tomcat 8)
+			credentials (  ) 
+		* Tomcat URL ( http:PublicIP of Tomcat Server :8080) 
+
+   Build >
+
+      login to TomcatServer
+   browser ( Public IP of tomcatServer:8080)
+
+4. Deploy Artifacts on Tomcat Server
+
+
+
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
