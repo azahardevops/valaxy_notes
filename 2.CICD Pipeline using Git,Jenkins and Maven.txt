@@ -1,0 +1,161 @@
+#-------------------------------------------------------------------------------
+2.CICD Pipeline using Git,Jenkins and Maven
+#-------------------------------------------------------------------------------
+
+1. Introduction 
+2. Setup Jenkins Server
+
+	* Setup a Linux EC2 Server name ( Jenkins-Server)   , Open VM by Mobaxterm
+		- sudo su - , pwd 
+	* Install Java
+		- jenkins download ( google) 
+		- stable (choose), Regular release 
+		- instructions to install jenkins
+			- yum install epel-release  ( not working  )
+			- suggestion 
+				 amazon-linux-extras
+		# amazon-linux-extras
+		# amazon-linux-extras install epel 
+		--check java exists or not
+		# java --version 
+		# amazon-linux-extras install java-open*
+	* install Jenkins
+		# yum install jenkins -y ( need epel packages are needed) 
+		- check service
+			# service jenkins status
+		- start jenkins service
+			
+	* Start Jenkins
+		# service jenkins start 
+	VM sg > inbound rules > port 8080 must be open 
+	* Access web UI on port 8080
+		pubic IP:8080 /
+		password 
+		-- don't install any plugins
+
+3.Run 1st Jenkins Job
+  Jenkins 
+	+ New Item > name (HelloWorldJob) > FreeStyleproject > OK
+	+ Build and deploy the code 
+	+ General , SCM, Build Trigger, Build, PostBuild actions
+
+	+ select Build > Execute Shell > ( echo "Hello World" , uptime)  > Apply > SAVE 
+	+ Build Now 
+	+ check Build History 
+	+ click on the success icon 
+		+ console output 
+		+ Check the workspace ( folder) 
+4. Integrate Git with Jenkins
+	VM Server ( Jenkins Server) 
+	- Setup the hostname 
+		# cat /etc/hostname
+		# hostnamectl set-hostname Jenkins-Server
+		- restart the system to reflect the changes 
+		# hostname jenkins-server ( temporary) 
+
+	* Install git on jenkins instance
+		# yum install git 
+		# git --version
+	* install github plugin on jenkins GUI
+		Jenkins GUI
+ 		 Manage Jenkins >  Manage Plugins > (Update, Available, Installed, Advanced)
+		> choose Available ( search - gitHub)  > install 
+		   - it install all other software dependencies 
+	* Configure Git on Jenkins GUI
+		> Manage Jenkins > Global Tool configuration  > git (executable) 
+		> name (git ) , path to git executable ( git ) 
+			# whereis git  ( full path ) 
+
+5.Run Jenkins Job to Pull code from GitHub
+	Jenkins-Server > Jenkins GUI
+		>New Item  > name ( PullCodeFromGitHub) , 
+		 -  General ( description - Pull Code From GitHub ) 
+		 - SCM (git ) Repository URL ( copy & paste) 
+		 - just doing pull the code 
+		 > apply and save 
+		> Build Now > cloned the repository >
+		> Console Output > check the workspace location 
+				/var/lib/jenkins/workspace
+6.Integrate Maven with Jenkins
+ 	* setup maven on jenkins-server act as build server
+		google ( maven download) , tar.gz (binary)
+	Jenkins-server 
+		# cd /opt , 
+		# wget URL, 
+		# tar -xvzf *.tar.gz 
+		# mv mavenxxxx maven 
+		# cd maven/bin/ ( mvn ) outside the directory mvn does not work 
+
+	* setup environment variables. 
+		JAVA_HOME, M2, M2_HOME 
+	use .bash_profile  ( root user) 
+		# cd ~ ( home directory) 
+		- to get the java home path 
+		# find / -name jvm or find / -name java-11* or mvn 
+		# vi .bash_profile 
+			JAVA_HOME=/xx/xx/xx
+			M2=/opt/maven/bin
+			M2_HOME=/o pt/maven 
+		PATH=$PATH:$JAVA_HOME:$M2:$M2_HOME
+		:wq!
+		# echo $PATH
+		# source .bash_profile 
+		# echo $PATH
+
+		# mvn -v 
+	* install Maven Plugin
+		Jenkins GUI > manage jenkins > Manage plugins > Available ( maven ) > install 
+	* Configure Maven and java 
+		Manage Jenkins > Global tool configuration > ( installs dependency plugins )
+		Manage Jenkins  > Global tool configuraitons >
+			Jdk   > JAVA_HOME ( mention the path ) 
+			maven > name (maven 3.8.3), MAVEN_HOME (/opt/maven) 
+		Apply & SAVE
+
+7. Build a Java project using Jenkins
+  Jenkins Server >  Jenkins UI ( Browswer - IP:8080) >  NewItem > Name(FirstMavenProject), MavenProject, 
+	> Source code > get the git url >
+	> Build > Root POM () , Build ( clean install )   > Apply & Save 
+	> BUild Now >  
+	> Console Output 
+
+	> Check the generated folder for the .war file. 
+
+
+
+ 
+
+tomcat download : https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.82/bin/apache-tomcat-9.0.82.tar.gz
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+#-------------------------------------------------------------------------------
+3. Integrating Tomcat Server in CICD Pipeline 
+#-------------------------------------------------------------------------------
+
+1. Introduction 
+2. Setup Tomcat Server
+	*  Setup a Linux Ec2  Instance
+	* Install Java
+	* Configure Tomcat 
+	* Start tomcat server 
+	* Access Web UI on port 8080
+*  Setup a Linux Ec2  Instance
+
+tomcat download : https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.82/bin/apache-tomcat-9.0.82.tar.gz
+
+* Install Java
+* Configure Tomcat 
+* Start tomcat server 
+* Access Web UI on port 8080
+
+
+
+
+
+
+
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

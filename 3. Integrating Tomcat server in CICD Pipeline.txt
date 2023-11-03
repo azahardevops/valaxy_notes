@@ -115,6 +115,58 @@ Deploy Artifacts on a tomcat server
    browser ( Public IP of tomcatServer:8080)
 
 4. Deploy Artifacts on Tomcat Server
+ - get a login app --> 
+   
+ * clone the git code (helloworld ) 
+	- gitbash ( install and download if not installed) 
+ 	- cd cd :/users/valaxy/Desktop/Valaxy/DevOps 
+	 	- git clone URL 
+	- cd webapp/src/main/webapp/
+  	- vi index.jsp 
+		copy and paste the code from internet google( form filling html code) 
+	- save and exit 
+  # git add . 
+  # git status 
+  # git commit -m " update index.jsp file"
+  # git push origin master 
+	- delete credentials from local system 
+		- credential manager > (Web Credentials, Windows Credentials) 
+  	- asking personal Access Token , create if you don't have
+		google ( Personal access token) 
+		- Account > settings >developer settings > name(), 30 days, choose all permissions 
+			Generate Token 
+  	- select the token
+   paste the token > SUCCESSFUL 
+
+Jenkins Server > Jenkins Web UI  > BuildAndDeployJob > build now 
+
+5. Automate Build and Deploy using Poll SCM
+
+ Jenkins Server > jenkins Web UI > BuildAndDeployJob >  Configure 
+	> Build Triggers ( Manual build (snapshot) , Trigger from remote, Build after another project, build periodically ( * * * * * ) cronjob entry ( job scheduler) irrespective of code change , Github hook trigger for GITSCM polling, PollSCM - if changes in the repo then only  ) 
+	> PollScM  ( * * * * * ) 
+
+ Minute: Hour: DOM : Month : DOW
+
+Apply and Save 
+
+::: GOTo Local repository of Jenkins Server >  change the code index.jsp 
+    git add . 
+    git commit -m "password field in new line"
+    git push origin master 
+
+check build  started by ( admin, SCM change ) 
+
+ERROR : unable to delete it 
+	- removed and failed to create it 
+
+try again : SUCCESSFUL 
+
+--------
+
+ 
+
+
 
 
 
