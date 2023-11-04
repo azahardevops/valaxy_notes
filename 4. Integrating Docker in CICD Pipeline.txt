@@ -1,0 +1,347 @@
+#--------------------------------------------------
+4. Integrating Docker in CICD Pipeline
+#--------------------------------------------------
+1. Setup Docker Environment
+  * Setup a Linux EC2 Instance 
+  * Install docker 
+  * Start docker services 
+  * Basic docker commands 
+
+ github - Simple-Devops-Project 
+   * docker installation 
+
+- Setup a Linux EC2 Instance 
+    launch an EC2 Instance  , inbound ( 22,8080), 
+    connect to the VM > mobaxterm , Public IP 
+
+- Install docker 
+   # sudo su - 
+   # yum install docker -y 
+
+- Start docker services 
+
+   # service docker status 
+   # service docker start 
+   # service docker status 
+
+- Basic docker commands 
+  - to validate 
+   # docker images 
+   # docker ps     ( only running containers ) 
+   # docker ps -a  ( total containers )
+   # docker --help 
+
+2. Create a Tomcat Container
+-----------------------------
+Docker image from docker hub -> docker pull 
+		or 		 --> local ----> docker run  ----> docker container
+Dockerfile  --> docker build
+
+docker hub : 
+	hub.docker.com 
+	search ( tomcat )   copy and paste on to docker VM 
+
+ dockerVM / docker host > 
+   # sudo su - 
+   # vi /etc/hostname  ( dockerhost)  -- change the hostname 
+   # init 6 to restar the system 
+
+start the docker services
+   # service docker status 
+   # service docker start    or at boot time use chkconfig 
+   # docker pull tomcat  ( if no tag mentioned, it downloads latest)
+   # docker images 
+   # docker run -d --name tomcat-container -p 8081:8080  tomcat 
+   			  	(Internal port ) VM port  : container port
+    	ctrl +c to cancel the command 
+   # docker ps -a 
+   # docker run -d --name tomcat-container -p 8081:8080  tomcat 
+   # docker ps -a 
+
+Web UI >  IP address : 8081 
+   - inbound rules > 8081-9000 > (20 Ports )  > save 
+Error in accessing the page but it has reached apache tomcat 
+
+3.Fixing Tomcat Container issue
+--------------------------------
+  * google ( Http status 404 - Not found tomcat container error ) 
+    -   
+docker host / VM : 
+  # docker ps  
+  # docker ps -a 
+-- login to the container 
+  # docker exec -it tomcat-container /bin/bash 
+  xxxxx # ls 
+  XXXXX # cd webapps 
+  XXXXX # cd.. ; 
+  XXXXX # cd webapps.dist 
+  XXXXX # cp -R * ../webapps 
+  xxxxx # cd ../webapps 
+
+refresh the browser : SuCCess -----
+ - The changes are temporary 
+exit 
+    - exit the container 
+  # docker ps -a 
+  # docker stop container-name 
+  # docker ps -a 
+  # docker ps 
+  # docker run -d --name tomcat2 -p 8082:8080 tomcat:latest 
+  # docker ps -a 
+
+webUP > IP address: 8082
+   - Changes are only on the image , but the container will as same as eariler / downloaded. 
+
+4. Create a first Docker File
+  - need to customize the Docker image 
+  - Write Your 1st Docker File 
+ 	* FROM :  to pull the base image 
+  		almost all the Dockerfiles start with FROM 
+ 	* RUN : to execute commands 
+		-  shell commands 
+	* CMD : to provide defaults for an executing container 
+		- commands can be overridden 
+	* ENTRYPOINT : to configure a container that will run as an executable 
+		- commands are not overriden 
+ 	* WORKDIR :  to set the working directory 
+		-  
+	* COPY : to copy a directory from your local machine to the docker container. 
+	* ADD : to copy files and folders from your local machine to docker containers. 
+		like wget command, 
+ 	* EXPOSE : informs Docker that the container listens on the specified network ports at runtime. 
+	* ENV : to set environment variables. 
+
+ follow the dockerfile references : google () 
+ 
+Install tomcat on Centos: 
+ 	* Pull centos from dockerhub  		( FROM)
+	* install java				( RUN)
+	* create /opt/tomcat directory		( RUN)
+	* Change working directory to /opt/tomcat	( WORKDIR)
+	* download tomcat packages 		( ADD / RUN )
+	* extract tar.gz file			( RUN ) 
+	* rename to tomcat directory 		( RUN )
+	* tell to docker that it runs on port 8080 ( EXPOSE )
+	* start tomcat services. 		 ( CMD ) 
+ docker VM / docker host
+ # vi Dockerfile 
+
+FROM centos:latest 
+RUN yum install java -y 
+RUN  mkdir /opt/tomcat 
+WORKDIR /opt/tomcat 
+RUN wget URL  ( google - tomcat download copy link address )
+or 
+ADD URL .
+RUN  tar -xvzf *.tar.gz 
+RUN  mv apachxxxx/*  /opt/tomcat 
+EXPOSE  8080
+CMD ["/opt/tomcat/bin/catalins.sh", "run"]  -- execution format 
+SAVE
+
+create an image 
+ # docker build -t mytomcat .  ( . represents location of Dockerfile current directory)
+ # docker images 
+--- Creation of a container
+ # docker run -d --name mytomcat-server -p 8083:8080 mytomcat 
+ 
+webUI > public IP:8083 
+ # docker stop mytomcat-server
+
+
+5. Create a Customized Docker file for Tomcat
+---------------------------------------------
+ # docker pull tomcat -- to download from dockerhub 
+    - it has given us 404 error, so we need to copy the contents of webapps.dist to webapps dir, so we need to create a dockerfile and build another container with Dockerfile 
+
+ # vi Dockerfile 
+ 
+FROM tomcat:latest 
+RUN cp -R /usr/local/tomcat/webapps.dist/*  /usr/local/tomcat/webapps 
+  ( to CATALINA Directory check in dockerhub for documentation of tomcat image ) 
+Save 
+
+# docker build -t demotomcat .  ( . currrent location has dockerfile) 
+# docker images 
+# docker run -d --name demotomcat-container -p 8085:8080 demotomcat 
+# docker ps -a 
+Webbroswer > IP of tomcat server:8085
+
+6. Integrating Docker with Jenkins
+----------------------------------
+* create a dockeradmin user 
+* install "publish over ssh" plugin 
+* Add Dockerhost to Jenkins "configure system"
+
+== create a dockeradmin user 
+   login to dockerhost/VM > 
+   # cat /etc/passwd 
+   # cat /etc/group
+   # useradd dockeradmin 
+   # passwd dockeradmin 
+   # id dockeradmin 
+add him to dockergroup
+   # usermod -aG docker dockeradmin
+   # id dockeradmin 
+unable to login through dockeradmin, does not allow password based authentication.  
+so we need to do some changes to  /etc/ssh/sshd_config 
+
+  # vi /etc/ssh/sshd_config 
+ /Password 
+    #PasswordAuthentication yes  ( commented )  --> uncomment it 
+     PasswordAuthentication no  ( uncommented)  ---> comment it 
+
+# service sshd reload 
+we can also login through ssh , but we need to create ssh keys  ( 2nd way )
+
+try to login , successful 
+
+
+ 
+* install "publish over ssh" plugin 
+* Add Dockerhost to Jenkins "configure system"
+  - later you do 
+
+
+== install "publish over ssh" plugin 
+
+jenkins server > jenkins WebUI 
+  > manage jenkins > manage plugins  > available ( publish over ssh ) > install
+   
+
+
+== Add Dockerhost to Jenkins "configure system"
+  manage jenkins > configure system > 
+	ssh server > name ( dockerhost ) , hostname ( private IP or publicIP) 
+ - private IP - same network ) 
+ 	> username (dockeradmin) , password ( advanced -- password )  > save 
+
+to get key 
+ # ssh-keygen 
+   create id_rsa 
+ # cd /home/dockeradmin/.ssh
+ # later we use it 
+
+7. Jenkins job to Build and copy artifacts on to Docker host
+--------------------------------------------------------------
+  Jenkins Server > Jenkins WebUi > use BuildAndDeployJob for the new Job 
+   > New Item > BuildAndDeployOnContainer  > Copy from BuildAndDeply > 
+      	Description 
+    	SCM 
+	Post-Build Actions: 
+	   Send build artifacts over SSH 
+		SSH Server  :
+ 			name ( dockerhost) 
+			transfers ( sourcefile : webapp/target/*.war ) 
+			remove prefix :webapp/target
+			remote directory : /home/dockeradmin
+			exec command : ---
+	Apply & save 
+
+dockerhost /VM : check ls  on /home/dockeradmin 
+
+jenkins server /  update : remote directory :
+
+
+8. Update Tomcat Docker file to automate Deployment Process
+------------------------------------------------------------
+dokcerhost 
+  -cd /opt
+  # mkdir docker 
+- give owner ship to dockeradmin 
+  # chown -R dockeradmin:dockeradmin docker 
+  # ls docker 
+  # ls -ld ( check the permissions of opt ) 
+  # cd /root
+  # mv Docerfile /opt/docker/ 
+  # chown  -R dockeradmin:dockeradmin  /opt/docker/Dockerfile 
+  
+jenkins Server > jenkins web UI 
+  Remote Directory : //opt//docker
+
+dockerhost :
+    # vi Dockerfile 
+	+ COPY ./*.war /usr/local/tomcat/webapps 
+save 
+    # docker build -t tomcat:v1 .  ( current location had Dockerfile) 
+    # docker images
+    # docker run -d --name tomcatv1 -p 8086:8080 tomcat:v1
+
+browser :ip of docker host :8085/webapp 
+
+9.Automate Build and Deployment on Docker Container
+---------------------------------------------------
+Jenkins server , Dockerhost/VM 
+
+need to automate end-to-end pipeline 
+ 
+jenkins server > select job  > settings >
+  * exec command 
+     ( cd /opt/docker ; docker build -t  regapp:v1 . ; docker run -d --name regapp -p 8087:8080 regapp:v1 )  
+ save and apply 
+
+docker host : 
+ 	# docker ps -a 
+ 	# docker stop  cid cid2 cid3  cid4 
+	# docker container prune ( delete all the stopped containers) 
+	# docker image prune -a ( delete all images ) 
+	# docker images 
+	# docker ps -a
+ 
+jenkins host : 
+ 	Build > 
+
+docker host : 
+	- check in /opt/docker 
+
+---update helloworld program 
+  git 
+  repository ( hello-world/webapp/src/main/webapp )
+  # vi index.jsp
+  add a line 
+ 
+# git add . 
+# git commit -m "updated index.jsp file "
+# git push origin master 
+# 
+
+error : CONFLICT container name alread exits , so we need to remove the older container .
+
+
+10.Jenkins Job to Automate CI_CD to deploy application on Docker Container
+-------------------------------------------------------------------------
+jenkins > select the BuildAndDeployOnContainer 
+  > settings 
+   * exec command 
+     ( cd /opt/docker ; docker build -t  regapp:v1 . ; 
+		docker stop registerapp
+		docker rm registerapp
+	  	docker run -d --name regiterapp -p 8087:8080 registerapp:v1 )  
+ 
+	apply and save 
+  > Build Now 
+
+docker host / vm 
+ - docker images 
+ - docker ps -a 
+ check it is successful 
+ 
+do a more modification index.jsp 
+ - add a simple line / message 
+save :wq!
+git add . 
+git commit -m " added a new line"
+
+Automated build and deployment 
+
+--------------successful -----------------
+we need deployment tool - ansible in the next lecture 
+
+
+
+
+
+
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
